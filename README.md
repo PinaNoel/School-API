@@ -24,11 +24,10 @@ API Rest para la gestion escolar que permite la autenticación de usuarios con d
 │ ├── Properties/
 │ ├── SQL/
 │ │ |── Int.sql
-│ ├── Src/
-│ │ |── Core/
-│ │ |── Application/
-│ │ |── Infrastructure/
-│ │ |── API/
+│ |── Core/
+│ |── Application/
+│ |── Infrastructure/
+│ |── API/
 │ |── appsettings.Development.json
 │ |── appsettings.json
 | └── school_api.csproj
