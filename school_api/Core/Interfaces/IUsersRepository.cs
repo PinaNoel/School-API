@@ -9,5 +9,7 @@ namespace school_api.Core.Interfaces
         Task AddUser(User user);
         Task AddStudent(User user);
         Task<User?> GetUserCredentials(string enrollment);
+        Task<User?> GetPassword(int id);
+        Task ChangePassword(User user);
     }
 }

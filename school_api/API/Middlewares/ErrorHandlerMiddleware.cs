@@ -1,8 +1,7 @@
 
-using System.Text.Json;
+
 using school_api.API.DTOs;
 using school_api.Core.Interfaces;
-using school_api.Application.Common.Errors;
 
 
 namespace school_api.API.Middlewares
@@ -51,11 +50,13 @@ namespace school_api.API.Middlewares
                 errorResponse.message = customEx.Message;
                 errorResponse.details = customEx.Details;
             }
-            else
+            else 
             {
+                // if (context.Response.StatusCode != 200) return;
+
                 context.Response.StatusCode = 500;
 
-                errorResponse.statusCode = 500;
+                errorResponse.statusCode = context.Response.StatusCode;
                 errorResponse.error = exception.GetType().Name;
                 errorResponse.message = "An unexpected error was ocurred";
                 errorResponse.details = exception.Message;

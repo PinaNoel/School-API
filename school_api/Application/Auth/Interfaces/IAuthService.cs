@@ -6,5 +6,6 @@ namespace school_api.Application.Auth.Interfaces
     public interface IAuthService
     {
         Task<LoginResponseDTO> Login(LoginDTO credentials);
+        Task ChangePassword(ChangePasswordDTO passwordDTO);
     }
 }

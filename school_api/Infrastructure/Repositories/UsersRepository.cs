@@ -1,8 +1,8 @@
 
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 using school_api.Core.Entities;
 using school_api.Core.Interfaces;
+using school_api.Application.Common.Errors;
 
 using school_api.Infrastructure.Context;
 using EfModels = school_api.Infrastructure.Models;
@@ -23,6 +23,7 @@ namespace school_api.Infrastructure.Repositories
             _logger = logger;
         }
 
+
         public async Task AddUser(User user)
         {
             EfModels.User efUser = new()
@@ -42,6 +43,7 @@ namespace school_api.Infrastructure.Repositories
             user.Id = efUser.Id;
         }
 
+
         public async Task AddStudent(User user)
         {
             EfModels.Student efStudent = new()
@@ -53,11 +55,12 @@ namespace school_api.Infrastructure.Repositories
             await _context.Students.AddAsync(efStudent);
         }
 
+
         public async Task<User?> GetUserCredentials(string enrollment)
         {
             EfModels.User? efUser = await _context.Users
             .Where(u => u.Enrollment == enrollment)
-            .Select(u => new EfModels.User { Id = u.Id, Password = u.Password, Salt = u.Salt, Role = u.Role, IsActive = u.IsActive})
+            .Select(u => new EfModels.User { Id = u.Id, Password = u.Password, Salt = u.Salt, Role = u.Role, IsActive = u.IsActive })
             .FirstOrDefaultAsync();
 
             if (efUser == null) return null;
@@ -72,6 +75,37 @@ namespace school_api.Infrastructure.Repositories
             user.UpdateRole(efUser.Role!);
             user.SetHash(efUser.Password!, efUser.Salt!);
             return user;
+        }
+
+
+        public async Task<User?> GetPassword(int id)
+        {
+            EfModels.User? efUser = await _context.Users
+            .Where(u => u.Id == id)
+            .Select(u => new EfModels.User { Id = u.Id, Password = u.Password, Salt = u.Salt })
+            .FirstOrDefaultAsync();
+
+            if (efUser == null) return null;
+
+            User user = new()
+            {
+                Id = efUser.Id
+            };
+
+            user.SetHash(efUser.Password!, efUser.Salt!);
+            return user;
+        }
+
+
+        public async Task ChangePassword(User user)
+        {
+            EfModels.User? efUser = await _context.Users
+            .Where(u => u.Id == user.Id)
+            .FirstOrDefaultAsync()
+            ?? throw new NotFoundError("User not found");
+
+            efUser.Password = user.Hash;
+            efUser.Salt = user.Salt;
         }
 
     }

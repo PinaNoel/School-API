@@ -11,6 +11,9 @@ using User = school_api.Application.Users;
 using Auth = school_api.Application.Auth;
 
 using Microsoft.EntityFrameworkCore;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 
 
@@ -30,12 +33,14 @@ builder.Logging.AddConsole();
 //  _____ Dependency injection
 
 // SQL Server
-builder.Services.AddDbContext<SchoolDataBaseContext>(options => {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-    options.LogTo(Console.WriteLine, LogLevel.Warning);
+builder.Services.AddDbContext<SchoolDataBaseContext>(options =>
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+        options.LogTo(Console.WriteLine, LogLevel.Warning);
     }
 );
 
+builder.Services.AddScoped<Common.Interfaces.ICurrentUserService, CurrentUserService>();
 
 // Services
 builder.Services.AddScoped<Common.Interfaces.IPasswordHasherService, Common.Services.PasswordHasherService>();
@@ -48,11 +53,32 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = false;
+
+        var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!))
+        };
+
+        options.Events = new CustomJwtEvents();
+    }
+);
+builder.Services.AddAuthorization();
 
 
 var app = builder.Build();
-
-
 
 
 // Configure the HTTP request pipeline.
@@ -62,9 +88,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
 app.MapControllers();
 app.UseMiddleware<ErrorHandlerMiddleware>();
 
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();

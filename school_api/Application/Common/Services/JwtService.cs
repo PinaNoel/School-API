@@ -18,23 +18,19 @@ namespace school_api.Application.Common.Services
             _configuration = configuration;
         }
 
+
         public string GenerateToken(User user)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!));
             var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
-            var claims = new List<Claim>
-            {
-                new (ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new (ClaimTypes.Role, user.Role!)
-            };
 
             var token = new JwtSecurityToken
             (
                 issuer: jwtSettings["Issuer"],
                 audience: jwtSettings["Audience"],
-                claims: claims,
+                claims: GenerateClaims(user),
                 expires: DateTime.UtcNow.AddMinutes(int.Parse(jwtSettings["ExpirationMinutes"]!)),
                 signingCredentials: credentials
             );
@@ -42,6 +38,18 @@ namespace school_api.Application.Common.Services
             string newtJwt = new JwtSecurityTokenHandler().WriteToken(token);
 
             return newtJwt;
+        }
+
+
+        public List<Claim> GenerateClaims(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new (ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new (ClaimTypes.Role, user.Role!)
+            };
+
+            return claims;
         }
     }
 }
